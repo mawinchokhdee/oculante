@@ -20,6 +20,8 @@ pub struct ImageGeometry {
     pub offset: Vector2<f32>,
 }
 
+
+
 /// The state of the application
 #[derive(Debug, AppState)]
 pub struct OculanteState {
@@ -63,6 +65,7 @@ pub struct OculanteState {
     /// List of images to cycle through. Usually the current dir or dropped files
     pub scrubber: Scrubber,
     pub checker_texture: Option<Texture>,
+    pub file_browser_active: bool,
 }
 
 impl OculanteState {
@@ -112,6 +115,7 @@ impl Default for OculanteState {
             fullscreen_offset: Default::default(),
             scrubber: Default::default(),
             checker_texture: Default::default(),
+            file_browser_active: Default::default(),
         }
     }
 }

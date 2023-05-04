@@ -1787,7 +1787,15 @@ pub fn main_menu(ui: &mut Ui, state: &mut OculanteState, app: &mut App, gfx: &mu
             .on_hover_text("Browse for image")
             .clicked()
         {
-            browse_for_image_path(state)
+            state.file_browser_active = true;
+            
+            
+            // browse_for_image_path(state)
+        }
+        if state.file_browser_active {
+            use crate::browse;
+
+            browse(state, ui);
         }
 
         ui.scope(|ui| {

@@ -27,6 +27,8 @@ mod utils;
 use utils::*;
 mod appstate;
 use appstate::*;
+mod filebrowser;
+use filebrowser::*;
 // mod events;
 #[cfg(target_os = "macos")]
 mod mac;
@@ -980,6 +982,7 @@ fn drawe(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins, state: &mut O
 #[cfg(feature = "file_open")]
 fn browse_for_image_path(state: &mut OculanteState) {
     let start_directory = &state.persistent_settings.last_open_directory;
+
 
     let file_dialog_result = rfd::FileDialog::new()
         .add_filter("All Supported Image Types", utils::SUPPORTED_EXTENSIONS)
