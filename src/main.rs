@@ -395,9 +395,14 @@ fn event(app: &mut App, state: &mut OculanteState, evt: Event) {
                 }
             }
 
-            #[cfg(feature = "file_open")]
+            #[cfg(feature = "native_filedialog")]
             if key_pressed(app, state, Browse) {
                 browse_for_image_path(state)
+            }
+
+            #[cfg(not(feature = "native_filedialog"))]
+            if key_pressed(app, state, Browse) {
+                state.file_browser_active = true;
             }
 
             if key_pressed(app, state, NextImage) {
@@ -979,10 +984,9 @@ fn drawe(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins, state: &mut O
 }
 
 // Show file browser to select image to load
-#[cfg(feature = "file_open")]
+#[cfg(feature = "native_filedialog")]
 fn browse_for_image_path(state: &mut OculanteState) {
     let start_directory = &state.persistent_settings.last_open_directory;
-
 
     let file_dialog_result = rfd::FileDialog::new()
         .add_filter("All Supported Image Types", utils::SUPPORTED_EXTENSIONS)

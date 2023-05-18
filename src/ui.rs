@@ -1,4 +1,4 @@
-#[cfg(feature = "file_open")]
+#[cfg(feature = "native_filedialog")]
 use crate::browse_for_image_path;
 use crate::{
     appstate::{ImageGeometry, OculanteState},
@@ -1052,7 +1052,7 @@ pub fn edit_ui(app: &mut App, ctx: &Context, state: &mut OculanteState, gfx: &mu
                     }
                 }
 
-                #[cfg(not(feature = "file_open"))]
+                #[cfg(not(feature = "native_filedialog"))]
                 ui.horizontal(|ui| {
                     ui.label("File:");
                     if let Some(p) = &mut state.current_path {
@@ -1086,7 +1086,7 @@ pub fn edit_ui(app: &mut App, ctx: &Context, state: &mut OculanteState, gfx: &mu
 
 
                 if state.current_path.is_none() && state.current_image.is_some() {
-                    #[cfg(not(feature = "file_open"))]
+                    #[cfg(not(feature = "native_filedialog"))]
                     {
                         if ui.button("Create output file").on_hover_text("This image does not have any file associated with it. Click to create a default one.").clicked() {
                             let dest = state.persistent_settings.last_open_directory.clone().join("untitled").with_extension(&state.edit_state.export_extension);
@@ -1096,7 +1096,7 @@ pub fn edit_ui(app: &mut App, ctx: &Context, state: &mut OculanteState, gfx: &mu
                     }
                 }
 
-                #[cfg(feature = "file_open")]
+                #[cfg(feature = "native_filedialog")]
                 if state.current_image.is_some() {
                     if ui.button("Save as...").clicked() {
                         let start_directory = &state.persistent_settings.last_open_directory;
@@ -1782,20 +1782,40 @@ pub fn main_menu(ui: &mut Ui, state: &mut OculanteState, app: &mut App, gfx: &mu
             app.window().set_always_on_top(state.always_on_top);
         }
 
-        #[cfg(feature = "file_open")]
+        // #[cfg(feature = "native_filedialog")]
         if unframed_button("🗁", ui)
             .on_hover_text("Browse for image")
             .clicked()
         {
             state.file_browser_active = true;
             
-            
-            // browse_for_image_path(state)
+            #[cfg(feature = "native_filedialog")]
+            browse_for_image_path(state)
         }
+
+        #[cfg(not(feature = "native_filedialog"))]
         if state.file_browser_active {
             use crate::browse;
 
-            browse(state, ui);
+            browse(
+                |de| {
+                    // info!("{:?}", f);
+
+                    if let Some(de) = de {
+                        state.is_loaded = false;
+                        state.current_image = None;
+                        state.player.load(&de, state.message_channel.0.clone());
+                        if let Some(dir) = de.parent() {
+                            state.persistent_settings.last_open_directory = dir.to_path_buf();
+                        }
+                        state.current_path = Some(de.to_path_buf());
+                        
+                    }
+                    state.file_browser_active = false;
+
+                },
+                ui,
+            );
         }
 
         ui.scope(|ui| {

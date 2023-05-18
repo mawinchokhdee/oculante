@@ -3113,6 +3113,7 @@ dependencies = [
  "image",
  "jpegxl-rs",
  "kamadak-exif",
+ "lazy_static",
  "lexical-sort",
  "libavif-image",
  "libwebp-sys",

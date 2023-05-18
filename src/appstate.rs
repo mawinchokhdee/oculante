@@ -20,8 +20,6 @@ pub struct ImageGeometry {
     pub offset: Vector2<f32>,
 }
 
-
-
 /// The state of the application
 #[derive(Debug, AppState)]
 pub struct OculanteState {

@@ -59,12 +59,14 @@ turbojpeg = {version = "0.5", features = ["image"], optional = true}
 usvg = "0.31"
 webbrowser = "0.8"
 tiff = "0.9"
+lazy_static = "1.4.0"
+
 
 [features]
 avif_native = ["avif-decode"]
 dav1d = ["libavif-image"]
-default = ["turbo", "file_open", "avif_native", "update"]
-file_open = ["rfd"]
+default = ["turbo", "avif_native", "update", "native_filedialog"]
+native_filedialog = ["rfd"]
 jpgxl = ["jpegxl-rs"]
 turbo = ["turbojpeg"]
 update = ["self_update"]

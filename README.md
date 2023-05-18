@@ -153,7 +153,7 @@ Mac
 
 ### Cargo Features
 If you disable `turbo` (on by default), the turbojpeg library will not be used to open jpeg images. You won't need Nasm to be installed.
-The feature `file_open` will enable/disable a file open dialog. This pulls in additional dependencies and is enabled by default.
+The feature `native_filedialog` will enable/disable a os-native file open dialog. This pulls in additional dependencies and is disabled by default.
 
 ### Shortcuts:
 `mouse wheel` = zoom
