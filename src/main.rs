@@ -395,15 +395,15 @@ fn event(app: &mut App, state: &mut OculanteState, evt: Event) {
                 }
             }
 
-            #[cfg(feature = "native_filedialog")]
             if key_pressed(app, state, Browse) {
-                browse_for_image_path(state)
+                #[cfg(feature = "native_filedialog")]
+                browse_for_image_path(state);
+            
+                state.file_browser_active = true;
+
             }
 
-            #[cfg(not(feature = "native_filedialog"))]
-            if key_pressed(app, state, Browse) {
-                state.file_browser_active = true;
-            }
+       
 
             if key_pressed(app, state, NextImage) {
                 if state.is_loaded {
@@ -877,6 +877,12 @@ fn drawe(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins, state: &mut O
             .min_height(30.)
             .default_height(30.)
             .show(ctx, |ui| {
+
+                if state.file_browser_active {
+                    
+                }
+
+
                 main_menu(ui, state, app, gfx);
             });
 
