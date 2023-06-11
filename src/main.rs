@@ -45,6 +45,8 @@ use crate::image_editing::EditState;
 mod image_editing;
 pub mod paint;
 
+pub const FONT: &[u8; 309828] = include_bytes!("../res/fonts/Inter-Regular.ttf");
+
 #[notan_main]
 fn main() -> Result<(), String> {
     if std::env::var("RUST_LOG").is_err() {
@@ -57,12 +59,15 @@ fn main() -> Result<(), String> {
         let _ = env_logger::try_init();
     }
 
+    let icon_data = include_bytes!("../icon.ico");
+
     let mut window_config = WindowConfig::new()
         .title(&format!("Oculante | {}", env!("CARGO_PKG_VERSION")))
         .size(1026, 600) // window's size
         .resizable(true) // window can be resized
-        .set_window_icon_data(Some(include_bytes!("../icon.ico")))
-        .set_taskbar_icon_data(Some(include_bytes!("../icon.ico")))
+        .set_window_icon_data(Some(icon_data))
+        .set_taskbar_icon_data(Some(icon_data))
+        .multisampling(0)
         .min_size(600, 400);
 
     #[cfg(target_os = "windows")]
@@ -223,10 +228,9 @@ fn init(gfx: &mut Graphics, plugins: &mut Plugins) -> OculanteState {
     plugins.egui(|ctx| {
         let mut fonts = FontDefinitions::default();
 
-        fonts.font_data.insert(
-            "my_font".to_owned(),
-            FontData::from_static(include_bytes!("../res/fonts/Inter-Regular.ttf")),
-        );
+        fonts
+            .font_data
+            .insert("my_font".to_owned(), FontData::from_static(FONT));
 
         // TODO: This needs to be a monospace font
         // fonts.font_data.insert(
@@ -326,7 +330,9 @@ fn event(app: &mut App, state: &mut OculanteState, evt: Event) {
             if key_pressed(app, state, ResetView) {
                 state.reset_image = true
             }
-
+            if key_pressed(app, state, ZenMode) {
+                toggle_zen_mode(state, app);
+            }
             if key_pressed(app, state, ZoomActualSize) {
                 set_zoom(1.0, None, state);
             }
@@ -483,6 +489,10 @@ fn event(app: &mut App, state: &mut OculanteState, evt: Event) {
             //TODO: remove this if save on exit works
             state.persistent_settings.window_geometry.1 = (width, height);
             state.persistent_settings.window_geometry.0 = app.backend.window().position();
+            // By resetting the image, we make it fill the window on resize
+            if state.persistent_settings.zen_mode {
+                state.reset_image = true;
+            }
         }
         _ => (),
     }
@@ -656,11 +666,16 @@ fn drawe(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins, state: &mut O
 
         match frame.source {
             FrameSource::Still => {
+                state.edit_state.result_image_op = Default::default();
+                state.edit_state.result_pixel_op = Default::default();
+
                 if !state.persistent_settings.keep_view {
                     state.reset_image = true;
 
                     if let Some(p) = state.current_path.clone() {
-                        state.player.cache.insert(&p, img.clone());
+                        if state.persistent_settings.max_cache != 0 {
+                            state.player.cache.insert(&p, img.clone());
+                        }
                     }
                 }
                 // always reset if first image
@@ -711,7 +726,10 @@ fn drawe(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins, state: &mut O
                 // debug!("EditResult");
                 // state.edit_state.is_processing = false;
             }
-            FrameSource::Reset => state.reset_image = true,
+            FrameSource::AnimationStart => {
+                state.animation_mode = true;
+                state.reset_image = true
+            }
             FrameSource::Animation => {
                 state.animation_mode = true;
             }
@@ -757,7 +775,6 @@ fn drawe(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins, state: &mut O
     }
 
     if state.reset_image {
-        state.animation_mode = false;
         let window_size = app.window().size().size_vec();
         if let Some(current_image) = &state.current_image {
             let img_size = current_image.size_vec();
@@ -872,18 +889,15 @@ fn drawe(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins, state: &mut O
 
     let egui_output = plugins.egui(|ctx| {
         // the top menu bar
-        egui::TopBottomPanel::top("menu")
-            .min_height(30.)
-            .default_height(30.)
-            .show(ctx, |ui| {
 
-                if state.file_browser_active {
-                    
-                }
-
-
-                main_menu(ui, state, app, gfx);
-            });
+        if !state.persistent_settings.zen_mode {
+            egui::TopBottomPanel::top("menu")
+                .min_height(30.)
+                .default_height(30.)
+                .show(ctx, |ui| {
+                    main_menu(ui, state, app, gfx);
+                });
+        }
 
         if state.persistent_settings.show_scrub_bar {
             egui::TopBottomPanel::bottom("scrubber")
@@ -929,11 +943,17 @@ fn drawe(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins, state: &mut O
             }
         }
 
-        if state.persistent_settings.info_enabled {
+        if state.persistent_settings.info_enabled
+            && !state.settings_enabled
+            && !state.persistent_settings.zen_mode
+        {
             info_ui(ctx, state, gfx);
         }
 
-        if state.persistent_settings.edit_enabled {
+        if state.persistent_settings.edit_enabled
+            && !state.settings_enabled
+            && !state.persistent_settings.zen_mode
+        {
             edit_ui(app, ctx, state, gfx);
         }
 
