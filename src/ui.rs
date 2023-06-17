@@ -1,5 +1,8 @@
+#[cfg(not(feature = "native_filedialog"))]
+use crate::browse;
 #[cfg(feature = "native_filedialog")]
 use crate::browse_for_image_path;
+
 use crate::{
     appstate::{ImageGeometry, OculanteState},
     image_editing::{process_pixels, Channel, ImageOperation, ScaleFilter},
@@ -1098,6 +1101,30 @@ pub fn edit_ui(app: &mut App, ctx: &Context, state: &mut OculanteState, gfx: &mu
                         }
                     }
                 }
+                #[cfg(not(feature = "native_filedialog"))]
+                {
+
+                    if ui.button("save as...").clicked() {
+                        state.file_browser_active = true;
+
+                    }
+                    // FIXME this appears twice
+                    if state.file_browser_active {
+
+                        browse(true,
+                            |de| {
+
+                                if let Some(de) = de {
+                                    //save
+
+                                }
+                                state.file_browser_active = false;
+
+                            },
+                            ui,
+                        );
+                    }
+                }
 
                 #[cfg(feature = "native_filedialog")]
                 if state.current_image.is_some() {
@@ -1791,19 +1818,16 @@ pub fn main_menu(ui: &mut Ui, state: &mut OculanteState, app: &mut App, gfx: &mu
             .clicked()
         {
             state.file_browser_active = true;
-            
+
             #[cfg(feature = "native_filedialog")]
             browse_for_image_path(state)
         }
 
         #[cfg(not(feature = "native_filedialog"))]
         if state.file_browser_active {
-            use crate::browse;
-
             browse(
+                false,
                 |de| {
-                    // info!("{:?}", f);
-
                     if let Some(de) = de {
                         state.is_loaded = false;
                         state.current_image = None;
@@ -1812,10 +1836,8 @@ pub fn main_menu(ui: &mut Ui, state: &mut OculanteState, app: &mut App, gfx: &mu
                             state.persistent_settings.last_open_directory = dir.to_path_buf();
                         }
                         state.current_path = Some(de.to_path_buf());
-                        
                     }
                     state.file_browser_active = false;
-
                 },
                 ui,
             );

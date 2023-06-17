@@ -403,12 +403,9 @@ fn event(app: &mut App, state: &mut OculanteState, evt: Event) {
             if key_pressed(app, state, Browse) {
                 #[cfg(feature = "native_filedialog")]
                 browse_for_image_path(state);
-            
+
                 state.file_browser_active = true;
-
             }
-
-       
 
             if key_pressed(app, state, NextImage) {
                 if state.is_loaded {

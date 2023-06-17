@@ -51,7 +51,7 @@ pub struct FileBrowser {
     pub current_manual_path: String,
 }
 
-pub fn browse<F: FnMut(Option<&PathBuf>)>(mut callback: F, ui: &mut Ui) {
+pub fn browse<F: FnMut(Option<&PathBuf>)>(save: bool, mut callback: F, ui: &mut Ui) {
     let mut state = STATE.lock().unwrap();
     // if !state.open {
     //     return;
@@ -101,6 +101,12 @@ pub fn browse<F: FnMut(Option<&PathBuf>)>(mut callback: F, ui: &mut Ui) {
                         }
                         if let Some(d) = dirs::document_dir() {
                             if ui.button("🗋 Documents").clicked() {
+                                state.current_manual_path = d.to_string_lossy().to_string();
+                                state.current_path = d;
+                            }
+                        }
+                        if let Some(d) = dirs::download_dir() {
+                            if ui.button("🗀 Downloads").clicked() {
                                 state.current_manual_path = d.to_string_lossy().to_string();
                                 state.current_path = d;
                             }
