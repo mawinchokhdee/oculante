@@ -4,12 +4,13 @@ use crate::{
     settings::PersistentSettings,
     utils::{ExtendedImageInfo, Frame, Player},
 };
+use egui_file::FileDialog;
 use egui_notify::Toasts;
 use image::RgbaImage;
 use nalgebra::Vector2;
 use notan::{egui::epaint::ahash::HashMap, prelude::Texture, AppState};
 use std::{
-    path::PathBuf,
+    path::{Path, PathBuf},
     sync::mpsc::{self, Receiver, Sender},
 };
 
@@ -88,6 +89,8 @@ pub struct OculanteState {
     pub redraw: bool,
     pub first_start: bool,
     pub toasts: Toasts,
+    // pub open_file_dialog: Option<(FileDialog, Box<dyn FnMut(&Path)>)>,
+    pub open_file_dialog: Option<FileDialog>,
 }
 
 impl OculanteState {
@@ -147,6 +150,7 @@ impl Default for OculanteState {
             redraw: Default::default(),
             first_start: true,
             toasts: Toasts::default().with_anchor(egui_notify::Anchor::BottomLeft),
+            open_file_dialog: None,
         }
     }
 }

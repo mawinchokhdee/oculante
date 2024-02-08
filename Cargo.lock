@@ -1439,6 +1439,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "egui_file"
+version = "0.11.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3798619cf962cee17970775470e1e572870275062932d1cdb9117c8d66bd61c7"
+dependencies = [
+ "egui",
+]
+
+[[package]]
 name = "egui_plot"
 version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4158,6 +4167,7 @@ dependencies = [
  "dirs 5.0.1",
  "egui-notify",
  "egui-phosphor",
+ "egui_file",
  "egui_plot",
  "env_logger 0.11.1",
  "evalexpr",

@@ -1,4 +1,3 @@
-#[cfg(feature = "file_open")]
 use crate::browse_for_image_path;
 use crate::{
     appstate::{ImageGeometry, Message, OculanteState},
@@ -17,6 +16,7 @@ use crate::{
 
 const ICON_SIZE: f32 = 24.;
 
+use egui_file::FileDialog;
 use egui_phosphor::regular::*;
 
 use arboard::Clipboard;
@@ -794,11 +794,12 @@ pub fn edit_ui(app: &mut App, ctx: &Context, state: &mut OculanteState, gfx: &mu
                         });
                     ui.end_row();
 
-                    modifier_stack_ui(&mut state.edit_state.image_op_stack, &mut image_changed, ui);
+                    modifier_stack_ui( &mut image_changed, ui, state);
                     modifier_stack_ui(
-                        &mut state.edit_state.pixel_op_stack,
+                        
                         &mut pixels_changed,
                         ui,
+                        state
                     );
 
                     ui.label_i(&format!("{RECYCLE} Reset"));
@@ -1159,7 +1160,7 @@ pub fn edit_ui(app: &mut App, ctx: &Context, state: &mut OculanteState, gfx: &mu
                     }
                 }
 
-                #[cfg(not(feature = "file_open"))]
+                #[cfg(not(feature = "rfd_dialogs"))]
                 ui.horizontal(|ui| {
                     ui.label("File:");
                     if let Some(p) = &mut state.current_path {
@@ -1193,7 +1194,7 @@ pub fn edit_ui(app: &mut App, ctx: &Context, state: &mut OculanteState, gfx: &mu
 
 
                 if state.current_path.is_none() && state.current_image.is_some() {
-                    #[cfg(not(feature = "file_open"))]
+                    #[cfg(not(feature = "rfd_dialogs"))]
                     {
                         if ui.button("Create output file").on_hover_text("This image does not have any file associated with it. Click to create a default one.").clicked() {
                             let dest = state.persistent_settings.last_open_directory.clone().join("untitled").with_extension(&state.edit_state.export_extension);
@@ -1203,7 +1204,7 @@ pub fn edit_ui(app: &mut App, ctx: &Context, state: &mut OculanteState, gfx: &mu
                     }
                 }
 
-                #[cfg(feature = "file_open")]
+                #[cfg(feature = "rfd_dialogs")]
                 if state.current_image.is_some() {
                     if ui.button(format!("{FLOPPY_DISK} Save as...")).clicked() {
 
@@ -1458,12 +1459,12 @@ pub fn stroke_ui(
     combined_response
 }
 
-fn modifier_stack_ui(stack: &mut Vec<ImageOperation>, image_changed: &mut bool, ui: &mut Ui) {
+fn modifier_stack_ui( image_changed: &mut bool, ui: &mut Ui, state: &mut OculanteState) {
     let mut delete: Option<usize> = None;
     let mut swap: Option<(usize, usize)> = None;
 
     // egui::Grid::new("dfdfd").num_columns(2).show(ui, |ui| {
-    for (i, operation) in stack.iter_mut().enumerate() {
+    for (i, operation) in state.edit_state.image_op_stack.iter_mut().enumerate() {
         ui.label_i(&format!("{operation}"));
 
         // let op draw itself and check for response
@@ -1472,7 +1473,7 @@ fn modifier_stack_ui(stack: &mut Vec<ImageOperation>, image_changed: &mut bool, 
             // ui.end_row();
 
             // draw the image operator
-            if operation.ui(ui).changed() {
+            if operation.ui(ui, state).changed() {
                 *image_changed = true;
             }
 
@@ -1531,12 +1532,12 @@ fn modifier_stack_ui(stack: &mut Vec<ImageOperation>, image_changed: &mut bool, 
     // });
 
     if let Some(delete) = delete {
-        stack.remove(delete);
+        state.edit_state.image_op_stack.remove(delete);
     }
 
     if let Some(swap) = swap {
-        if swap.1 < stack.len() {
-            stack.swap(swap.0, swap.1);
+        if swap.1 < state.edit_state.image_op_stack.len() {
+            state.edit_state.image_op_stack.swap(swap.0, swap.1);
         }
     }
 }
@@ -1789,13 +1790,15 @@ pub fn main_menu(ui: &mut Ui, state: &mut OculanteState, app: &mut App, gfx: &mu
 
         // ui.label("Channels");
 
-        #[cfg(feature = "file_open")]
+
         if unframed_button(FOLDER, ui)
             .on_hover_text("Browse for image")
             .clicked()
         {
             browse_for_image_path(state)
         }
+
+
 
         let mut changed_channels = false;
 

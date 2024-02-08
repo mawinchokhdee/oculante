@@ -5,8 +5,10 @@ use std::path::{Path, PathBuf};
 
 use crate::paint::PaintStroke;
 use crate::ui::EguiExt;
+use crate::OculanteState;
 
 use anyhow::Result;
+use egui_file::FileDialog;
 use evalexpr::*;
 use fast_image_resize as fr;
 use image::{imageops, DynamicImage, RgbaImage};
@@ -187,7 +189,7 @@ impl ImageOperation {
     }
 
     // Add functionality about how to draw UI here
-    pub fn ui(&mut self, ui: &mut Ui) -> Response {
+    pub fn ui(&mut self, ui: &mut Ui, state: &mut OculanteState) -> Response {
         // ui.label_i(&format!("{}", self));
         match self {
             Self::Brightness(val) => ui.slider_styled(val, -255..=255),
@@ -259,7 +261,8 @@ impl ImageOperation {
                                 }
                             });
 
-                        #[cfg(feature = "file_open")]
+                       
+
                         if ui
                             .button("Load from disk")
                             .on_hover_ui(|ui| {
@@ -267,6 +270,28 @@ impl ImageOperation {
                             })
                             .clicked()
                         {
+                            #[cfg(not(feature = "rfd_dialogs"))]
+                            {
+                                let func = Box::new({
+                                    move |path: &std::path::Path| {
+                                        *lut_name = path.to_string_lossy().to_string();
+                                        // let parent = path
+                                        //     .parent()
+                                        //     .map(|p| p.to_path_buf())
+                                        //     .unwrap_or_default();
+                                        // ui.ctx()
+                                        //     .data_mut(|w| w.insert_persisted(Id::new("lutsrc"), parent));
+                                    }
+                                });
+
+                                let mut dialog = FileDialog::open_file(None);
+                                // .show_files_filter(filter)
+                                dialog.open()
+                                ;
+                                state.open_file_dialog = Some(dialog);
+                            }
+
+                            #[cfg(feature = "rfd_dialogs")]
                             if let Some(lut_file) = rfd::FileDialog::new()
                                 .set_directory(last_folder.unwrap_or_default())
                                 .pick_file()

@@ -418,7 +418,7 @@ fn event(app: &mut App, state: &mut OculanteState, evt: Event) {
                     }
                 }
             }
-            #[cfg(feature = "file_open")]
+            
             if key_pressed(app, state, Browse) {
                 state.redraw = true;
                 browse_for_image_path(state);
@@ -964,6 +964,18 @@ fn drawe(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins, state: &mut O
         // ctx.request_repaint_after(Duration::from_secs(1));
         state.toasts.show(ctx);
 
+         
+
+        if let Some(dialog) = &mut state.open_file_dialog {
+            if dialog.show(ctx).selected() {
+              if let Some(file) = dialog.path() {
+
+                
+                info!("{:?}", file)
+              }
+            }
+          }
+
         if !state.persistent_settings.zen_mode {
             egui::TopBottomPanel::top("menu")
                 .min_height(30.)
@@ -1075,10 +1087,22 @@ fn drawe(app: &mut App, gfx: &mut Graphics, plugins: &mut Plugins, state: &mut O
 }
 
 // Show file browser to select image to load
-#[cfg(feature = "file_open")]
+#[cfg(feature = "rfd_dialogs")]
 fn browse_for_image_path(state: &mut OculanteState) {
-    let start_directory = state.persistent_settings.last_open_directory.clone();
+    let uppercase_lowercase_ext = [
+        utils::SUPPORTED_EXTENSIONS
+            .into_iter()
+            .map(|e| e.to_ascii_lowercase())
+            .collect::<Vec<_>>(),
+        utils::SUPPORTED_EXTENSIONS
+            .into_iter()
+            .map(|e| e.to_ascii_uppercase())
+            .collect::<Vec<_>>(),
+    ]
+    .concat();
+
     let load_sender = state.load_channel.0.clone();
+    let start_directory = state.persistent_settings.last_open_directory.clone();
     state.redraw = true;
     std::thread::spawn(move || {
         let uppercase_lowercase_ext = [
@@ -1101,6 +1125,71 @@ fn browse_for_image_path(state: &mut OculanteState) {
             let _ = load_sender.send(file_path);
         }
     });
+}
+
+
+// Show file browser to select image to load
+#[cfg(not(feature = "rfd_dialogs"))]
+fn browse_for_image_path(state: &mut OculanteState) {
+    let uppercase_lowercase_ext = [
+        utils::SUPPORTED_EXTENSIONS
+            .into_iter()
+            .map(|e| e.to_ascii_lowercase())
+            .collect::<Vec<_>>(),
+        utils::SUPPORTED_EXTENSIONS
+            .into_iter()
+            .map(|e| e.to_ascii_uppercase())
+            .collect::<Vec<_>>(),
+    ]
+    .concat();
+
+    let filter = Box::new({
+        move |path: &std::path::Path| -> bool {
+            uppercase_lowercase_ext.contains(
+                &path.extension()
+                    .map(|p| p.to_string_lossy().to_string())
+                    .unwrap_or_default(),
+            )
+        }
+    });
+
+    let load_sender = state.load_channel.0.clone();
+
+
+    // let function = Box::new({
+    //     move |path: &std::path::Path|  {
+    //         let _ = load_sender.send(path.to_path_buf());
+    //     }
+    // });
+    use egui_file::FileDialog;
+    let start_directory = state.persistent_settings.last_open_directory.clone();
+    state.redraw = true;
+
+    let mut dialog = FileDialog::open_file(Some(start_directory.clone())).filter(filter);
+    dialog.open();
+    state.open_file_dialog = Some(dialog);
+
+    // std::thread::spawn(move || {
+    //     let uppercase_lowercase_ext = [
+    //         utils::SUPPORTED_EXTENSIONS
+    //             .into_iter()
+    //             .map(|e| e.to_ascii_lowercase())
+    //             .collect::<Vec<_>>(),
+    //         utils::SUPPORTED_EXTENSIONS
+    //             .into_iter()
+    //             .map(|e| e.to_ascii_uppercase())
+    //             .collect::<Vec<_>>(),
+    //     ]
+    //     .concat();
+    //     let file_dialog_result = rfd::FileDialog::new()
+    //         .add_filter("All Supported Image Types", &uppercase_lowercase_ext)
+    //         .add_filter("All File Types", &["*"])
+    //         .set_directory(start_directory)
+    //         .pick_file();
+    //     if let Some(file_path) = file_dialog_result {
+    //         let _ = load_sender.send(file_path);
+    //     }
+    // });
 }
 
 // Make sure offset is restricted to window size so we don't offset to infinity
