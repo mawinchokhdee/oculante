@@ -1,9 +1,10 @@
 rm -rf libheif
-git clone --branch v1.17.3 https://github.com/strukturag/libheif.git
+git clone https://github.com/strukturag/libheif.git
+# git clone --branch v1.17.4 https://github.com/strukturag/libheif.git
 cd libheif
 mkdir build
 cd build
-cmake --preset=release ..
+cmake --preset=release-noplugins ..
 make
 cd ../../
 
