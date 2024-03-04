@@ -21,7 +21,7 @@ name = "oculante"
 [dependencies]
 anyhow = "1.0"
 arboard = "3.2"
-avif-decode = {version = "0.2", optional = true}
+avif-decode = {version = "1.0.0", optional = true}
 clap = "3.2"
 dds-rs = "0.7"
 dirs = "5.0"

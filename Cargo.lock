@@ -502,15 +502,14 @@ dependencies = [
 
 [[package]]
 name = "avif-decode"
-version = "0.2.2"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae93bf69733ae4162fa44e49ad06febe3747c0ae85c0c8f930a0ebd8f669d4e9"
+checksum = "dfaac7851d172130c810c8fd2d572b1110bc1b664a792cbc6b0fdcf071fb1834"
 dependencies = [
  "aom-decode",
  "avif-parse",
  "imgref",
  "lodepng",
- "num_cpus",
  "owning_ref",
  "quick-error",
  "rgb",
